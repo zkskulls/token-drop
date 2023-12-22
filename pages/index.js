@@ -19,17 +19,19 @@ export default function Home() {
       try {
         const response = await fetch("https://zkskulls.github.io/reply-claim-app.github.io/wallet.json");
         const jsonData = await response.json();
-
-        // Check if the wallet in JSON data matches the current address
-        if (jsonData.wallet === address) {
+  
+        // Find the matching wallet address in the JSON data
+        const userWalletData = jsonData.find((data) => data.wallet === address);
+  
+        if (userWalletData) {
           // If the wallet matches, set the amount from JSON data
-          setAmount(jsonData.amount.toString());
+          setAmount(userWalletData.amount.toString());
         }
       } catch (error) {
         console.error("Error fetching JSON data:", error);
       }
     };
-
+  
     fetchData();
   }, [address]);
 
