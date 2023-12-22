@@ -1,106 +1,131 @@
-import { ConnectWallet } from "@thirdweb-dev/react";
+import { useEffect } from "react";
+import { ConnectWallet, useAddress, useTokenBalance, useTokenDrop, useTokenSupply, useClaimToken, lightTheme } from "@thirdweb-dev/react";
+import { useState } from "react";
 import styles from "../styles/Home.module.css";
-import Image from "next/image";
 
 export default function Home() {
+  const [amount, setAmount] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const address = useAddress();
+  const tokenDrop = useTokenDrop("0x37dAd75d9076F7F6Ebc719d9979D80f3BB0D9Ae9");
+  const { data: tokenSupply } = useTokenSupply(tokenDrop);
+  const { data: tokenBalance } = useTokenBalance(tokenDrop, address);
+  const { mutate: claimTokens, isLoading } = useClaimToken(tokenDrop);
+
+  // Fetch data from the JSON URL
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("https://zkskulls.github.io/reply-claim-app.github.io/wallet.json");
+        const jsonData = await response.json();
+
+        // Check if the wallet in JSON data matches the current address
+        if (jsonData.wallet === address) {
+          // If the wallet matches, set the amount from JSON data
+          setAmount(jsonData.amount.toString());
+        }
+      } catch (error) {
+        console.error("Error fetching JSON data:", error);
+      }
+    };
+
+    fetchData();
+  }, [address]);
+
+  const onSuccess = () => {
+    // Hapus pesan kesalahan sebelum mengatur pesan keberhasilan
+    setErrorMessage(""); 
+    setSuccessMessage("Tokens claimed!");
+  };
+  
+  const onError = (error) => {
+    // Hapus pesan keberhasilan sebelum mengatur pesan kesalahan
+    setSuccessMessage("");
+    setErrorMessage(`Error claiming tokens!`);
+  };
+
+  const handleClaimTokens = async () => {
+    try {
+      await claimTokens({ amount, to: address }, { onSuccess, onError });
+      // Handle success (optional)
+    } catch (error) {
+      // Handle error (optional)
+    }
+  };
+
   return (
     <main className={styles.main}>
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>
-            Welcome to{" "}
-            <span className={styles.gradientText0}>
-              <a
-                href="https://thirdweb.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                thirdweb.
-              </a>
-            </span>
-          </h1>
+<div id="main">
 
-          <p className={styles.description}>
-            Get started by configuring your desired network in{" "}
-            <code className={styles.code}>src/index.js</code>, then modify the{" "}
-            <code className={styles.code}>src/App.js</code> file!
-          </p>
+<div className="cardWrapper">
 
-          <div className={styles.connect}>
-            <ConnectWallet
-              dropdownPosition={{
-                side: "bottom",
-                align: "center",
-              }}
-            />
-          </div>
-        </div>
+  <div className="cardHeader">
+    <span>ZAS TOKEN</span>
+  </div>
 
-        <div className={styles.grid}>
-          <a
-            href="https://portal.thirdweb.com/"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              src="/images/portal-preview.png"
-              alt="Placeholder preview of starter"
-              width={300}
-              height={200}
-            />
-            <div className={styles.cardText}>
-              <h2 className={styles.gradientText1}>Portal ➜</h2>
-              <p>
-                Guides, references, and resources that will help you build with
-                thirdweb.
-              </p>
-            </div>
-          </a>
+  <div className="cardContent">
+    <img src="assets/coin.svg" alt="coin" />
 
-          <a
-            href="https://thirdweb.com/dashboard"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              src="/images/dashboard-preview.png"
-              alt="Placeholder preview of starter"
-              width={300}
-              height={200}
-            />
-            <div className={styles.cardText}>
-              <h2 className={styles.gradientText2}>Dashboard ➜</h2>
-              <p>
-                Deploy, configure, and manage your smart contracts from the
-                dashboard.
-              </p>
-            </div>
-          </a>
+    <ConnectWallet
+        theme={lightTheme({
+          colors: {
+            primaryButtonBg: "#00A8FF",
+            secondaryButtonText: "#00A8FF",
+            secondaryIconColor: "#706f78",
+          },
+        })}
+        btnTitle={"Connect Wallet"}
+        modalTitle={"Connect "}
+        modalSize={"wide"}
+        welcomeScreen={{
+          title: "Welcome to zkSkulls",
+          subtitle:
+            "Connect your wallet address to claim ZAS Native Token",
+          img: {
+            src: "https://zkskulls.com/wp-content/uploads/2023/12/CA744BFA-1.png",
+            width: 150,
+            height: 150,
+          },
+        }}
+        modalTitleIconUrl={
+          "https://zkskulls.com/wp-content/uploads/2023/12/CA744BFA-1.png"
+        }
+      />
 
-          <a
-            href="https://thirdweb.com/templates"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              src="/images/templates-preview.png"
-              alt="Placeholder preview of templates"
-              width={300}
-              height={200}
-            />
-            <div className={styles.cardText}>
-              <h2 className={styles.gradientText3}>Templates ➜</h2>
-              <p>
-                Discover and clone template projects showcasing thirdweb
-                features.
-              </p>
-            </div>
-          </a>
-        </div>
+    <span>You Will Receive</span>
+
+    <div className="inputGroup">
+      <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} disabled/>
+      <span className="inputName">ZAS</span>
+    </div>
+
+    <span className="wallet">{address}</span>
+
+    <span>Token Supply : {tokenSupply?.displayValue} {tokenSupply?.symbol}</span>
+    <span>Your token balance: {tokenBalance?.displayValue} {tokenBalance?.symbol}</span>
+
+    {successMessage && <span className="success-message boldPixel msg">{successMessage}</span>}
+    {errorMessage && <span className="error-message boldPixel msg">{errorMessage}</span>}
+
+    <div className="navigateGroup">
+
+      {/* Column pertama */}
+      <div className="column">
+        <a href="https://zkskulls.com" className="boldPixelNon">BACK TO ZKSKULLS</a>
       </div>
+
+      {/* Column kedua */}
+      <div className="column">
+        <a className="boldPixel claim" onClick={handleClaimTokens} disabled={isLoading}>CLAIM</a>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+</div>
     </main>
   );
 }
