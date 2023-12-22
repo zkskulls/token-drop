@@ -13,27 +13,30 @@ export default function Home() {
   const { data: tokenBalance } = useTokenBalance(tokenDrop, address);
   const { mutate: claimTokens, isLoading } = useClaimToken(tokenDrop);
 
-  // Fetch data from the JSON URL
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch("https://zkskulls.github.io/reply-claim-app.github.io/wallet.json");
-        const jsonData = await response.json();
-  
-        // Find the matching wallet address in the JSON data
-        const userWalletData = jsonData.find((data) => data.wallet === address);
-  
-        if (userWalletData) {
-          // If the wallet matches, set the amount from JSON data
-          setAmount(userWalletData.amount.toString());
-        }
-      } catch (error) {
-        console.error("Error fetching JSON data:", error);
+// Fetch data from the JSON URL
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const response = await fetch("https://zkskulls.github.io/reply-claim-app.github.io/wallet.json");
+      const jsonData = await response.json();
+
+      // Find the matching wallet address in the JSON data
+      const userWalletData = jsonData.find((data) => data.wallet === address);
+
+      if (userWalletData) {
+        // If the wallet matches, set the amount from JSON data
+        setAmount(userWalletData.amount.toString());
+      } else {
+        // If the wallet is not found, reset the amount to 0
+        setAmount("0");
       }
-    };
-  
-    fetchData();
-  }, [address]);
+    } catch (error) {
+      console.error("Error fetching JSON data:", error);
+    }
+  };
+
+  fetchData();
+}, [address]);
 
   const onSuccess = () => {
     // Hapus pesan kesalahan sebelum mengatur pesan keberhasilan
@@ -104,7 +107,6 @@ export default function Home() {
 
     <span className="wallet">{address}</span>
 
-    <span>Token Supply : {tokenSupply?.displayValue} {tokenSupply?.symbol}</span>
     <span>Your token balance: {tokenBalance?.displayValue} {tokenBalance?.symbol}</span>
 
     {successMessage && <span className="success-message boldPixel msg">{successMessage}</span>}
